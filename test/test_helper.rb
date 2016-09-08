@@ -4,6 +4,7 @@ require "minitest/autorun"
 require "minitest/pride"
 require "logger"
 require "active_record"
+require "pry"
 
 Minitest::Test = Minitest::Unit::TestCase unless defined?(Minitest::Test)
 
@@ -200,6 +201,20 @@ module TestDatabase
 
   def test_respond_to_bad_method
     assert !User.group_by_day(:created_at).respond_to?(:no_such_method)
+  end
+
+  def test_group_by_range_relation
+    create_user("2014-01-07")
+    create_user("2014-01-14")
+    create_user("2014-02-04")
+    expected = {
+      Date.parse("2014-01-06") => 2,
+      Date.parse("2014-01-20") => 0,
+      Date.parse("2014-02-03") => 1
+    }
+    assert_equal expected, User.group_by_range(:created_at,
+      series: true,
+      range_end: Date.parse("2014-02-17"), range_length: 2.weeks, ranges_count: 3).count
   end
 
   def test_last
